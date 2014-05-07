@@ -1,0 +1,155 @@
+<html>
+<head><title>YouTube Subscriptions</title><script src="jquery-2.1.1.min.js"></script>
+<style type="text/css">
+	h1 {
+		background-color: #1D81EB;
+		font-family: sans-serif;
+		margin: 5px auto;
+		font-weight: normal;
+		padding: 10px;
+		border-radius: 5px;
+		color: white;
+		width: 560px;
+	}
+	
+	#f div, #f input{
+		display: inline;
+	}
+	
+	#f {
+		width: 560px;
+		margin: 10px auto;
+	}
+	
+	#fbuttons {
+		width: 485px;
+		margin: 10px auto;
+	}
+	
+	#jsonstuff1 {
+		width: 525px;
+		margin: 0 auto;
+	}
+	
+	@media (max-width: 560px){
+	
+		body {
+			margin: 0px;
+		}
+	
+		h1 {
+			margin: 5px auto;
+			border-radius: 0px;
+			padding: 2px;
+			font-size: 10px;
+			width: 100%;
+		}
+		
+		#f div, #f input, #fbuttons{
+			display: block;
+			width: auto;
+		}
+		
+		#jsonstuff1 {
+			width: 100%;
+		}
+	}
+</style>
+</head>
+<body>
+
+	<h1 id="title">YouTube RSS Subscriptions Generator</h1>
+
+	<form id="f">
+		<div>Channel Name: </div><input type="text"></input>
+		<div>Number of subscriptions: </div><input type="text"></input>
+	</form>
+	<div id="fbuttons"><button onclick="getSubs()">Get Json Files</button>
+	<button onclick="prepJson()">Get Subscription RSS Files</button>
+	<button onclick="singleRSS()">Get RSS for single channel</button>
+	</div>
+	<div id="jsonstuff1">
+		<p>In order to get <em>your</em> RSS feeds, enter you channel and the number of subscriptions you have to other channels.<br />
+		Then, Click "Get JSON Files".<br />
+		After following the instructions, click "Get subscription RSS files", and add the relevant feeds to your system.</p>
+		<p>To get a single channel's RSS feed, enter it's name and click "get for single channel".</p>
+	</div>
+	
+	
+	<script type="text/javascript">
+		
+		
+		function getSubs(){
+			var channel = "" + f.elements[0].value;
+			var number = calcSubs();
+			downloadJson(channel, number);
+		}
+		
+		function calcSubs(){
+			var frm = document.getElementById("f");
+			var no = "" + f.elements[1].value;
+			no = (no / 50);
+			no = Math.round(no);
+			no++;
+			return no;
+		}
+		
+		function downloadJson(channel, number){
+			syso("Save these files in the same directory as this page, witht the name");
+			syso("data1.json, data2.json and so on.... maximum of 10.")
+			syso("");
+			for(var i = 0; i < number; i++){
+				printDLJson(channel, i);
+			}
+		}
+		
+		function printDLJson(channel, i){
+			var node = document.createElement('div');
+			var url = "http://gdata.youtube.com/feeds/api/users/"+channel+"/subscriptions?max-results=50&start-index="+(i+1)+"&alt=json"
+			node.id = "jsonSubs" + trimchannel(channel) + i;
+			node.innerHTML = "<a href='"+url+"'>"+channel+" data "+i+".json </a>";
+			document.body.appendChild(node);
+		}
+		
+		function singleRSS(){
+			var channel = "" + f.elements[0].value;
+			var node = document.createElement('div');
+			var url = "http://gdata.youtube.com/feeds/base/users/"+channel+"/uploads?alt=rss";
+			node.id = "rssSingle" + trimchannel(channel);
+			node.innerHTML = "<a href='"+url+"'> Activity for: "+channel+"</a>";
+			document.body.appendChild(node);
+		}
+		
+		function prepJson(){
+		for (var i = 0; i <10; i++){
+			var loc = "data"+i+".json";
+			parseJson(loc);
+		}
+		}
+		
+		function parseJson(loc){
+			$.getJSON(loc, function(jsonRSS){
+				for (var i in jsonRSS.feed.entry){
+					printChannel(jsonRSS.feed.entry[i].link[1].href, jsonRSS.feed.entry[i].title.$t);
+				};
+			});
+		}
+		
+		function printChannel(url, channel){
+			var node = document.createElement('div');
+			
+			node.id = "sub" + trimchannel(channel);
+			node.innerHTML = "<a href='"+url+"'>"+channel+"</a>";
+			document.body.appendChild(node);
+		}
+		
+		function trimchannel(s){
+			return s.substring(13);
+		}
+		
+		function syso(s){var node=document.createElement('div');node.innerHTML=s; node.class="syso";document.body.appendChild(node);}
+		
+	</script>
+	
+</body>
+</html>

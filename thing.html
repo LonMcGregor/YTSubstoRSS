@@ -1,5 +1,5 @@
 <html>
-<head><title>YouTube Subscriptions</title><script src="jquery-2.1.1.min.js"></script>
+<head><title>YouTube Subscriptions</title><script src="jquery-2.1.1.min.js"></script><script src="xml2json.js"></script>
 <style type="text/css">
 	h1 {
 		background-color: #1D81EB;
@@ -26,7 +26,7 @@
 		margin: 10px auto;
 	}
 	
-	#jsonstuff1 {
+	.jsonstuff1 {
 		width: 525px;
 		margin: 0 auto;
 	}
@@ -68,11 +68,15 @@
 	<button onclick="prepJson()">Get Subscription RSS Files</button>
 	<button onclick="singleRSS()">Get RSS for single channel</button>
 	</div>
-	<div id="jsonstuff1">
+	<div class="jsonstuff1">
 		<p>In order to get <em>your</em> RSS feeds, enter you channel and the number of subscriptions you have to other channels.<br />
 		Then, Click "Get JSON Files".<br />
 		After following the instructions, click "Get subscription RSS files", and add the relevant feeds to your system.</p>
 		<p>To get a single channel's RSS feed, enter it's name and click "get for single channel".</p>
+		<p>Afterwards, to prettify the youtube rss part of an OPML file, take out the relevant folder, and ude the converter below to change it into a json file.<br/>
+		Note: you will need to add an encapsulating xml element. <br />
+		Remember to convert it back to xml to paste into the opml file afterwards.</p>
+		<p>xml2Json source: https://code.google.com/p/x2js/</p>
 	</div>
 	
 	
@@ -151,5 +155,88 @@
 		
 	</script>
 	
-</body>
+	
+	<h1>Prettify RSS feeds - Step 1</h1>
+	<div class="jsonstuff1">
+		<button id="convertToJsonBtn">XML => JSON</button>
+		<button id="convertToXmlBtn">JSON => XML</button>
+		<button id="fixParseErrorBtn">Fix xml &amp;stuff; errors.</button>
+		<div>
+			 <h4>XML:</h4>
+
+			<textarea id="xmlArea" cols="55" rows="15"></textarea>
+		</div>
+		<div>
+			 <h4>JSON:</h4>
+
+			<textarea id="jsonArea" cols="55" rows="15"></textarea>
+		</div>
+	</div>
+	
+	<script type="text/javascript">
+	var x2js = new X2JS();
+
+function convertXml2JSon() {
+    $("#jsonArea").val(JSON.stringify(x2js.xml_str2json($("#xmlArea").val())));
+}
+
+function convertJSon2XML() {
+    $("#xmlArea").val(x2js.json2xml_str($.parseJSON($("#jsonArea").val())));
+}
+
+function fixErrors(){
+	//all fixes done in #xmlArea
+	
+}
+
+$("#xmlArea").val("<thing>Enter your opml folder to convert here.</thing>");
+
+convertXml2JSon();
+convertJSon2XML();
+$("#convertToJsonBtn").click(convertXml2JSon);
+$("#convertToXmlBtn").click(convertJSon2XML);
+$("#fixParseErrorBtn").click(fixErrors);
+	</script>
+	
+	<h1>Prettify RSS feeds - Step 2</h1>
+	<div class="jsonstuff1">
+		<button onclick="doS2()">Run conversion</button>
+		<div>
+			After converting your file, save it as opmlData.json in this directory. <br/>
+			Then run the conversion, and your updated file will be placed below.
+		</div>
+		<textarea id="prettyOut" cols="55" rows="15"></textarea>
+	</div>
+	<script type="text/javascript">
+		$("#prettyOut").val("");
+		
+		function doS2(){
+			$.getJSON("opmlData.json", function(opJson){
+				for (var i in opJson.root.outline){
+					for (var j in opJson.root.outline[i].entry){
+						var new_xmlUrl = newUrl(opJson.root.outline[i].entry[j]._xmlUrl);
+						opJson.root.outline[i].entry[j]._xmlUrl = new_xmlUrl;
+						
+						so(opJson.root.outline[i].entry[j]._xmlUrl);
+					}
+					
+				};
+				
+				$("#prettyOut").val(window.JSON.stringify(opJson));
+			});
+		}
+		
+		function newUrl(oldUrl){
+			var userID = oldUrl.substring(42,66);
+			
+			return "" + "https://gdata.youtube.com/feeds/base/users/"+userID+"/uploads?max-results=20&amp;alt=rss";
+		}
+		
+		function so(str){var current=$("#prettyOut").val()+"\n";$("#prettyOut").val(current+str);}
+	
+	</script>
+	
+	
+	
+	</body>
 </html>
